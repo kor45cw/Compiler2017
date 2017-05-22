@@ -80,64 +80,66 @@ let next : inst list * stack * state -> inst list * stack * state
   | hd::tl ->  
     match hd with
     | Push n -> (tl, (Z n)::e, s)
-    | Add ->
-        (match e with
-        | [] -> raise No_more_elements
-        | [a] -> raise No_more_elements
-        | z1::z2::tl2 -> (tl, (Z ((value_int z1) + (value_int z2)))::tl2, s))
-    | Mul -> 
-        (match e with
-        | [] -> raise No_more_elements
-        | [a] -> raise No_more_elements
-        | z1::z2::tl2 -> (tl, (Z ((value_int z1) * (value_int z2)))::tl2, s))
-    | Sub -> 
-        (match e with
-        | [] -> raise No_more_elements
-        | [a] -> raise No_more_elements
-        | z1::z2::tl2 -> (tl, (Z ((value_int z1) - (value_int z2)))::tl2, s))
+    | Add -> (
+      match e with
+      | [] -> raise No_more_elements
+      | [a] -> raise No_more_elements
+      | z1::z2::tl2 -> (tl, (Z ((value_int z1) + (value_int z2)))::tl2, s))
+    | Mul -> (
+      match e with
+      | [] -> raise No_more_elements
+      | [a] -> raise No_more_elements
+      | z1::z2::tl2 -> (tl, (Z ((value_int z1) * (value_int z2)))::tl2, s))
+    | Sub -> (
+      match e with
+      | [] -> raise No_more_elements
+      | [a] -> raise No_more_elements
+      | z1::z2::tl2 -> (tl, (Z ((value_int z1) - (value_int z2)))::tl2, s))
     | True -> (tl, (T true)::e, s)
     | False -> (tl, (T false)::e, s)
-    | Eq -> 
-        (match e with
-        | [] -> raise No_more_elements
-        | [a] -> raise No_more_elements
-        | z1::z2::tl2 -> (tl, (T ((value_int z1) == (value_int z2)))::tl2, s))
-    | Le ->
-        (match e with
-        | [] -> raise No_more_elements
-        | [a] -> raise No_more_elements
-        | z1::z2::tl2 -> (tl, (T ((value_int z1) <= (value_int z2)))::tl2, s))
-    | And -> 
-        (match e with
-        | [] -> raise No_more_elements
-        | [a] -> raise No_more_elements
-        | t1::t2::tl2 -> (
-          match (value_bool t1, value_bool t2) with
-          | (true, true)  -> (tl, (T true)::tl2, s)
-          | _ -> (tl, (T false)::tl2, s)
-        ))
-    | Neg -> 
-        (match e with
-        | [] -> raise No_more_elements
-        | t1::tl2 -> (
-          match (value_bool t1) with
-          | true -> (tl, (T false)::tl2, s)
-          | false -> (tl, (T true)::tl2, s)
-        ))
+    | Eq -> (
+      match e with
+      | [] -> raise No_more_elements
+      | [a] -> raise No_more_elements
+      | z1::z2::tl2 -> (tl, (T ((value_int z1) == (value_int z2)))::tl2, s))
+    | Le -> (
+      match e with
+      | [] -> raise No_more_elements
+      | [a] -> raise No_more_elements
+      | z1::z2::tl2 -> (tl, (T ((value_int z1) <= (value_int z2)))::tl2, s))
+    | And -> (
+      match e with
+      | [] -> raise No_more_elements
+      | [a] -> raise No_more_elements
+      | t1::t2::tl2 -> (
+        match (value_bool t1, value_bool t2) with
+        | (true, true)  -> (tl, (T true)::tl2, s)
+        | _ -> (tl, (T false)::tl2, s)
+        )
+      )
+    | Neg -> (
+      match e with
+      | [] -> raise No_more_elements
+      | t1::tl2 -> (
+        match (value_bool t1) with
+        | true -> (tl, (T false)::tl2, s)
+        | false -> (tl, (T true)::tl2, s)
+        )
+      )
     | Fetch x -> (tl, (Z (state_lookup x s))::e, s)
-    | Store x -> 
-      (match e with
-        | [] -> raise No_more_elements
-        | z::tl2 -> (tl, tl2, (state_bind x (value_int z) s))
+    | Store x -> (
+      match e with
+      | [] -> raise No_more_elements
+      | z::tl2 -> (tl, tl2, (state_bind x (value_int z) s))
       )
     | Noop -> (tl, e, s)
-    | Branch (c1, c2) -> 
-      (match e with
-        | [] -> raise No_more_elements
-        | t::tl2 -> (
-          match (value_bool t) with
-          | true -> ((List.append c1 tl), tl2, s)
-          | false -> ((List.append c2 tl), tl2, s)
+    | Branch (c1, c2) -> (
+      match e with
+      | [] -> raise No_more_elements
+      | t::tl2 -> (
+        match (value_bool t) with
+        | true -> ((List.append c1 tl), tl2, s)
+        | false -> ((List.append c2 tl), tl2, s)
         )
       )
     | Loop (c1, c2) -> 
@@ -146,8 +148,16 @@ let next : inst list * stack * state -> inst list * stack * state
           let third = List.append c1 (second::[]) in
             let final = List.append third tl in
               (final, e, s)
-    | Read -> ([], e, s)
-    | Print -> ([], e, s)
+    | Read -> (tl, (Z (read_int()))::e, s)
+    | Print -> (
+      match e with
+      | [] -> raise No_more_elements
+      | z::tl2 -> (
+        match z with
+        | Z z -> print_endline (string_of_int z); (tl, tl2, s)
+        | T b -> print_endline (string_of_bool b); (tl, tl2, s)
+        )
+      )
 
 
 
