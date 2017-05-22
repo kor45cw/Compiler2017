@@ -83,7 +83,7 @@ let rec eval_b : bexp -> state -> bool
   | EQ (a1,a2) -> eval_a a1 s = eval_a a2 s
   | LE (a1,a2) -> eval_a a1 s <= eval_a a2 s
   | NEG b -> not (eval_b b s)
-  | AND (b1,b2) -> (eval_b b1 s) && (eval_b b2 s)
+  | AND (b1, b2) -> (eval_b b1 s) && (eval_b b2 s)
 
 let rec eval_stmt : stmt -> state -> state
 =fun c s ->
