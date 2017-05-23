@@ -60,17 +60,16 @@ let state_lookup x s = PMap.find x s
 let state_bind x v s = PMap.add x v s
 
 exception No_more_elements
-exception Error of string
 
 let value_int v = 
   match v with 
   | Z n -> n
-  | T _ -> raise (Error "Bool type is used as Num type")
+  | T _ -> raise (Failure "Bool type is used as Num type")
 
 let value_bool v =
   match v with
   | T b -> b
-  | Z _ -> raise (Error "Num type is used as Bool type")
+  | Z _ -> raise (Failure "Num type is used as Bool type")
 
 
 let next : inst list * stack * state -> inst list * stack * state
@@ -143,9 +142,9 @@ let next : inst list * stack * state -> inst list * stack * state
         )
       )
     | Loop (c1, c2) -> 
-      let first = List.append c2 ((Loop(c1, c2))::[]) in
-        let second = Branch(first, Noop::[]) in
-          let third = List.append c1 (second::[]) in
+      let first = List.append c2 [Loop(c1, c2)] in
+        let second = [Branch(first, [Noop])] in
+          let third = List.append c1 second in
             let final = List.append third tl in
               (final, e, s)
     | Read -> (tl, (Z (read_int()))::e, s)
