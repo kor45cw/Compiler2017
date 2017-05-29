@@ -66,8 +66,39 @@ let state_empty = PMap.empty
 let state_lookup x s = PMap.find x s
 let state_bind x v s = PMap.add x v s
 
-let eval_stmt : stmt -> state -> state
-=fun c s -> s (* TODO *)
+let rec eval_a : aexp -> state -> int
+=fun a s ->
+  match a with
+  | NUM n -> n
+  | VAR x -> state_lookup x s
+  | ADD (a1, a2) -> (eval_a a1 s) + (eval_a a2 s)
+  | SUB (a1, a2) -> (eval_a a1 s) - (eval_a a2 s)
+  | MUL (a1, a2) -> (eval_a a1 s) * (eval_a a2 s)
+
+let rec eval_b : bexp -> state -> bool
+=fun b s ->
+  match b with
+  | TRUE -> true
+  | FALSE -> false
+  | EQ (a1,a2) -> eval_a a1 s = eval_a a2 s
+  | LE (a1,a2) -> eval_a a1 s <= eval_a a2 s
+  | NEG b -> not (eval_b b s)
+  | AND (b1, b2) -> (eval_b b1 s) && (eval_b b2 s)
+
+let rec eval_stmt : stmt -> state -> state
+=fun c s ->
+  match c with
+  | ASSIGN (x, exp) -> state_bind x (eval_a exp s) s
+  | SKIP -> s
+  | SEQ (c1, c2) -> eval_stmt c2 (eval_stmt c1 s)
+  | IF (bexp, stmt1, stmt2) -> if eval_b bexp s then eval_stmt stmt1 s else eval_stmt stmt2 s
+  | WHILE (b, c) -> if eval_b b s then eval_stmt (WHILE (b,c)) (eval_stmt c s) else s
+  | READ x -> state_bind x (eval_a (NUM (read_int ())) s) s
+  | PRINT e -> 
+    (match e with
+    | NUM n -> print_endline (string_of_int n); s
+    | VAR x -> print_endline (string_of_int (state_lookup x s)); s
+    | _ -> raise (Failure "print: not an integer"))
 
 let run : stmt -> unit 
 =fun pgm -> ignore (eval_stmt pgm state_empty)
